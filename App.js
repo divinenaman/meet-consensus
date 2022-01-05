@@ -1,5 +1,7 @@
 import { StatusBar } from "expo-status-bar";
 import { StyleSheet, Text, View, Button, ScrollView } from "react-native";
+import { NavigationContainer } from "@react-navigation/native";
+import { createNativeStackNavigator } from "@react-navigation/native-stack";
 
 import Card from "./src/components/Card";
 import CreateEventScreen from "./src/screens/createEvent";
@@ -7,31 +9,43 @@ import CreateEventScreen from "./src/screens/createEvent";
 import "./src/services/firebase/firebase";
 import { add, get } from "./src/services/firebase/methods";
 
+const Stack = createNativeStackNavigator();
+
+function Home({ navigation }) {
+  return (
+    <View style={styles.container}>
+      <ScrollView
+        style={{
+          width: "100%",
+          marginTop: 30,
+        }}
+        contentContainerStyle={{
+          justifyContent: "center",
+          alignItems: "center",
+        }}
+      >
+        <Card
+          onPress={() => navigation.navigate("Create Event")}
+          pressable={true}
+        >
+          <Text>Create Event</Text>
+        </Card>
+        <Card>
+          <Text>Join Event</Text>
+        </Card>
+      </ScrollView>
+    </View>
+  );
+}
+
 export default function App() {
   return (
-    <>
-      <StatusBar hidden />
-      <View style={styles.container}>
-        <CreateEventScreen />
-        <ScrollView
-          style={{
-            width: "100%",
-            marginTop: 30,
-          }}
-          contentContainerStyle={{
-            justifyContent: "center",
-            alignItems: "center",
-          }}
-        >
-          <Card>
-            <Text>Create Event</Text>
-          </Card>
-          <Card>
-            <Text>Join Event</Text>
-          </Card>
-        </ScrollView>
-      </View>
-    </>
+    <NavigationContainer>
+      <Stack.Navigator initialRouteName={"Home"}>
+        <Stack.Screen name="Home" component={Home} />
+        <Stack.Screen name="Create Event" component={CreateEventScreen} />
+      </Stack.Navigator>
+    </NavigationContainer>
   );
 }
 

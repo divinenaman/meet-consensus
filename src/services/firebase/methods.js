@@ -2,17 +2,17 @@ import { getFirestore, addDoc, doc, getDoc, collection, getDocs } from 'firebase
 
 const firestore = getFirestore();
 
-export async function add(collection_name, data) {
+async function add(collection_name, data) {
     try {
-        await addDoc(collection(firestore, collection_name), data)
-        return true
+        const res = await addDoc(collection(firestore, collection_name), data)
+        return res
     } catch(e) {
         console.log(e)
         return false
     }    
 }
 
-export async function getSingle(collection_name, doc_id) {
+async function getSingle(collection_name, doc_id) {
     try {
         const res = await getDoc(doc(firestore, collection_name, doc_id));
         if (res.exists()) {
@@ -26,7 +26,7 @@ export async function getSingle(collection_name, doc_id) {
     }
 } 
 
-export async function getMultiple(collection_name) {
+async function getMultiple(collection_name) {
     try {
         const res = await getDocs(collection(firestore, collection_name));
         let arr = []
@@ -36,4 +36,10 @@ export async function getMultiple(collection_name) {
         console.log(e);
         return null
     }
+}
+
+export default {
+    add,
+    getSingle,
+    getMultiple
 }

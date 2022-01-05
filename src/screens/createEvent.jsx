@@ -9,24 +9,33 @@ import {
 } from "react-native";
 
 import Card from "../components/Card";
+import Gap from "../components/Gap";
+
+import Firebase from "../services/firebase/methods.js";
 
 function DateInput({ onChange }) {
   const [_date, setDate] = useState({});
+  const re = {
+    day: /^[0-9]{1,2}$/,
+    month: /^[0-9]{1,2}$/,
+    year: /^[0-9]{1,4}$/,
+  };
 
   useEffect(() => {
     onChange(_date);
   }, [_date]);
 
   const handleChange = (key, val) => {
-    if (val && parseInt(val)) {
-      if (key == "day" || key == "month" || key == "year") {
-        setDate((e) => {
-          return {
-            ...e,
-            [key]: val,
-          };
-        });
-      }
+    if (
+      (key == "day" || key == "month" || key == "year") &&
+      (val == "" || val.match(re[key]))
+    ) {
+      setDate((e) => {
+        return {
+          ...e,
+          [key]: val,
+        };
+      });
     }
   };
 
@@ -35,7 +44,6 @@ function DateInput({ onChange }) {
       style={{
         width: "100%",
         flexDirection: "row",
-        justifyContent: "center",
         alignItems: "center",
       }}
     >
@@ -63,13 +71,24 @@ function DateInput({ onChange }) {
 function DurationInput({ onChange }) {
   const [dur, setDur] = useState({});
 
+  const re = {
+    hours: /^[0-9]{1,2}$/,
+    mins: /^[0-9]{1,2}$/,
+  };
+
   useEffect(() => {
-    onChange(dur);
+    onChange({
+      hours: dur?.hours ? dur?.hours : 0,
+      mins: dur?.mins ? dur?.mins : 0,
+    });
   }, [dur]);
 
   const handleChange = (key, val) => {
-    if (val && parseInt(val)) {
-      if (key == "hours" || key == "mins") {
+    if (
+      (key == "hours" || key == "mins") &&
+      (val == "" || val.match(re[key]))
+    ) {
+      if (!val || !(key == "mins") || parseInt(val) < 60) {
         setDur((e) => {
           return {
             ...e,
@@ -85,7 +104,6 @@ function DurationInput({ onChange }) {
       style={{
         width: "100%",
         flexDirection: "row",
-        justifyContent: "center",
         alignItems: "center",
       }}
     >
@@ -93,12 +111,14 @@ function DurationInput({ onChange }) {
         placeholder="hours"
         value={dur?.hours || ""}
         onChangeText={(e) => handleChange("hours", e)}
+        style={{ textAlign: "right" }}
       />
       <Text> : </Text>
       <TextInput
         placeholder="minutes"
         value={dur?.mins || ""}
         onChangeText={(e) => handleChange("mins", e)}
+        style={{ textAlign: "left" }}
       />
     </View>
   );
@@ -110,30 +130,58 @@ export default function CreateEventScreen() {
   const [minD, setMinD] = useState("");
   const [status, setStatus] = useState("");
 
-  const handleChange = () => {
-    if (!name && !_date && !minD) {
-        // ADD data to DB
-        setStatus("Event Successfully Created")    
+  const handleChange = async () => {
+    const d = new Date();
+    if (
+      name &&
+      parseInt(_date.day) >= d.getDate() &&
+      parseInt(_date.month) >= d.getMonth() + 1 &&
+      _date.year >= d.getFullYear() &&
+      (minD.hours || minD.mins)
+    ) {
+      // ADD data to DB
+      const res = await Firebase.add("events", {
+        name,
+        min_duration: minD,
+        date: _date,
+        exclusion: []
+      });
+      setStatus("Event Successfully Created");
     } else {
-        setStatus("Fill All fields Correctly")
+      setStatus("Fill All fields Correctly");
     }
-  } 
+  };
 
   return (
-    <Card>
-      <Text>Event Name</Text>
-      <TextInput
-        placeholder="enter"
-        value={name}
-        onChangeText={(e) => setName(e)}
-      />
-      <Text>Date</Text>
-      <DateInput onChange={(d) => setDate(d)} />
-      <Text>Minimum Duration</Text>
-      <DurationInput placeholder="enter" onChange={(e) => setMinD(e)} />
-      <Button title="Add Event" onPress={handleChange} />
-      <Text style={{ margin: 10, color: "red" }}>{status}</Text>  
-    </Card>
+    <View style={styles.container}>
+      <Card minHeight={500}>
+        <Gap left={0} right={0} top={20} bottom={20}>
+          <View style={{ justifyContent: "center", alignItems: "center" }}>
+            <Text>Event Name</Text>
+            <TextInput
+              placeholder="enter"
+              value={name}
+              onChangeText={(e) => setName(e)}
+            />
+          </View>
+
+          <View style={{ justifyContent: "center", alignItems: "center" }}>
+            <Text>Date</Text>
+            <DateInput onChange={(d) => setDate(d)} />
+          </View>
+
+          <View style={{ justifyContent: "center", alignItems: "center" }}>
+            <Text>Minimum Duration</Text>
+            <DurationInput placeholder="enter" onChange={(e) => setMinD(e)} />
+          </View>
+
+          <View style={{ justifyContent: "center", alignItems: "center" }}>
+            <Button title="Add Event" onPress={handleChange} />
+          </View>
+          <Text>{status}</Text>
+        </Gap>
+      </Card>
+    </View>
   );
 }
 
@@ -145,11 +193,6 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     alignItems: "center",
     justifyContent: "center",
-    borderRadius: 20,
-    borderColor: "#000",
-    borderStyle: "solid",
-    borderWidth: 2,
     marginVertical: 10,
-    elevation: 5,
   },
 });
