@@ -1,10 +1,30 @@
-import { getFirestore, addDoc, doc, getDoc, collection, getDocs } from 'firebase/firestore';
+import { getFirestore, addDoc, doc, getDoc, collection, getDocs, updateDoc, arrayUnion } from 'firebase/firestore';
 
 const firestore = getFirestore();
+
+const preprocessor = {
+    "list": {
+        append(key, value) {
+            return {
+                [key]: arrayUnion(value)
+            }
+        }
+    }
+}
 
 async function add(collection_name, data) {
     try {
         const res = await addDoc(collection(firestore, collection_name), data)
+        return res
+    } catch(e) {
+        console.log(e)
+        return false
+    }    
+}
+
+async function update(collection_name, doc_id, data) {
+    try {
+        const res = await updateDoc(doc(firestore, collection_name, doc_id), data)
         return res
     } catch(e) {
         console.log(e)
@@ -29,8 +49,8 @@ async function getSingle(collection_name, doc_id) {
 async function getMultiple(collection_name) {
     try {
         const res = await getDocs(collection(firestore, collection_name));
-        let arr = []
-        res.forEach(d=>arr.append(d))
+        let arr = {}
+        res.forEach(d=>arr[d.id] = d.data())
         return arr
     } catch(e) {
         console.log(e);
@@ -39,7 +59,9 @@ async function getMultiple(collection_name) {
 }
 
 export default {
+    preprocessor,
     add,
+    update,
     getSingle,
     getMultiple
 }
