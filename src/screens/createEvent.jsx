@@ -12,6 +12,7 @@ import Card from "../components/Card";
 import Gap from "../components/Gap";
 
 import Firebase from "../services/firebase/methods.js";
+import AsyncStorage from "../services/AsyncStorage/storage.js";
 
 function DateInput({ onChange }) {
   const [_date, setDate] = useState({});
@@ -146,6 +147,10 @@ export default function CreateEventScreen() {
         date: _date,
         exclusion: []
       });
+      
+      if (res) {
+        await AsyncStorage.storeDataInArray("events", res.id);
+      }  
       setStatus("Event Successfully Created");
     } else {
       setStatus("Fill All fields Correctly");
